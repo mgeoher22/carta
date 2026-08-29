@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <title>Una carta para ti</title>
+  <style>
+    :root{
+      --red:#b51f2e;
+      --red-dark:#8f1723;
+      --red-soft:#ead6b7;
+      --paper:#f6e7c5;
+      --white:#fffaf0;
+      --text:#3b2b22;
+      --muted:#7d6958;
+      --border:#d8c29e;
+    }
+
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      min-height:100vh;
+      padding:22px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-family:Georgia, "Times New Roman", serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 12% 8%, #fdecef 0, transparent 26%),
+        radial-gradient(circle at 88% 92%, #fff0f2 0, transparent 24%),
+        #fff;
+    }
+
+    .app{
+      width:min(100%,430px);
+    }
+
+    .screen{
+      display:none;
+      animation:fade .55s ease;
+    }
+
+    .screen.active{display:block}
+
+    @keyframes fade{
+      from{opacity:0;transform:translateY(12px)}
+      to{opacity:1;transform:translateY(0)}
+    }
+
+    .panel{
+      background:rgba(248,235,205,.94);
+      border:1px solid #ccb487;
+      border-radius:28px;
+      padding:26px 22px;
+      text-align:center;
+      box-shadow:0 18px 45px rgba(92,61,28,.12);
+    }
+
+    h1,h2{
+      margin:0 0 12px;
+      font-weight:500;
+      line-height:1.18;
+    }
+
+    h1{font-size:2rem}
+    h2{font-size:1.55rem}
+
+    p{
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      line-height:1.55;
+      margin:0 0 18px;
+    }
+
+    .intro-line{
+      width:42px;
+      height:3px;
+      border-radius:999px;
+      background:var(--red);
+      margin:0 auto 18px;
+    }
+
+    .photo{
+      display:block;
+      width:100%;
+      aspect-ratio:4/3;
+      object-fit:cover;
+      margin:16px auto;
+      border-radius:18px;
+      border:5px solid #fff7e7;
+      outline:1px solid #cdb88f;
+      box-shadow:0 12px 28px rgba(70,15,25,.10);
+      background:#e8dcc4;
+    }
+
+    .caption{
+      font-size:.92rem;
+      color:var(--muted);
+    }
+
+    .btn{
+      width:100%;
+      border:0;
+      border-radius:999px;
+      padding:14px 20px;
+      font-size:1rem;
+      font-weight:700;
+      cursor:pointer;
+      transition:.2s ease;
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    }
+
+    .btn:active{transform:scale(.98)}
+
+    .primary{
+      color:white;
+      background:linear-gradient(135deg,var(--red),var(--red-dark));
+      box-shadow:0 8px 18px rgba(200,29,50,.20);
+    }
+
+    .secondary{
+      margin-top:10px;
+      background:white;
+      color:var(--text);
+      border:1px solid #ccb487;
+    }
+
+    /* Envelope */
+    .envelope-stage{
+      min-height:610px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .envelope-wrap{
+      width:100%;
+      max-width:360px;
+      min-height:560px;
+      position:relative;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .envelope{
+      width:290px;
+      height:185px;
+      position:relative;
+      perspective:1000px;
+      cursor:pointer;
+      z-index:5;
+      transition:transform .65s ease, opacity .45s ease;
+    }
+
+    .env-back{
+      position:absolute;
+      inset:0;
+      background:#dec59d;
+      border:1px solid #bda273;
+      border-radius:10px;
+      overflow:hidden;
+      z-index:1;
+    }
+
+    .env-back::before,
+    .env-back::after{
+      content:"";
+      position:absolute;
+      bottom:-72px;
+      width:220px;
+      height:220px;
+      background:#ead5b2;
+      transform:rotate(45deg);
+    }
+
+    .env-back::before{left:-104px}
+    .env-back::after{right:-104px}
+
+    .flap{
+      position:absolute;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      transform-origin:top center;
+      transition:transform .7s cubic-bezier(.2,.7,.2,1);
+      z-index:5;
+    }
+
+    .flap::before{
+      content:"";
+      position:absolute;
+      top:0;
+      left:0;
+      border-left:145px solid transparent;
+      border-right:145px solid transparent;
+      border-top:105px solid #d5b889;
+    }
+
+    .seal{
+      position:absolute;
+      left:50%;
+      top:82px;
+      width:48px;
+      height:48px;
+      transform:translateX(-50%);
+      border-radius:50%;
+      background:var(--red);
+      z-index:6;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:white;
+      font-size:20px;
+      font-family:Georgia,serif;
+      box-shadow:0 4px 12px rgba(100,15,30,.18);
+      transition:opacity .25s ease;
+    }
+
+    /* Hidden completely until the envelope opens */
+    .letter{
+      position:absolute;
+      left:50%;
+      top:50%;
+      width:min(280px, 80vw);
+      max-height:min(500px, calc(100vh - 150px));
+      overflow-y:auto;
+      transform:translate(-50%, 30px) scale(.88);
+      opacity:0;
+      visibility:hidden;
+      pointer-events:none;
+      background:
+        linear-gradient(#0000 31px, rgba(120,82,43,.10) 32px);
+      background-size:100% 32px;
+      background-color:var(--paper);
+      border:1px solid #cdb88f;
+      border-radius:8px;
+      padding:22px 20px;
+      z-index:3;
+      text-align:left;
+      box-shadow:0 10px 28px rgba(82,52,22,.15);
+      transition:
+        opacity .35s ease,
+        transform .8s cubic-bezier(.2,.75,.2,1);
+    }
+
+    .letter h2{
+      text-align:center;
+      font-size:1.35rem;
+      margin-bottom:16px;
+    }
+
+    .letter p{
+      font-family:Georgia, "Times New Roman", serif;
+      font-size:.95rem;
+      line-height:1.52;
+      margin-bottom:11px;
+    }
+
+    .signature{
+      text-align:right;
+      margin-top:16px;
+      font-style:italic;
+    }
+
+    .open-hint{
+      margin-top:22px;
+      color:var(--muted);
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      font-size:.9rem;
+      transition:opacity .25s ease;
+    }
+
+    .continue{
+      opacity:0;
+      visibility:hidden;
+      pointer-events:none;
+      margin-top:18px;
+      max-width:280px;
+      transition:opacity .35s ease;
+    }
+
+    .envelope-wrap.open .flap{
+      transform:rotateX(180deg);
+    }
+
+    .envelope-wrap.open .seal{
+      opacity:0;
+    }
+
+    .envelope-wrap.open .open-hint{
+      opacity:0;
+    }
+
+    .envelope-wrap.open .letter{
+      visibility:visible;
+      opacity:1;
+      transform:translate(-50%, -50%) scale(1);
+      z-index:8;
+      pointer-events:auto;
+    }
+
+    .envelope-wrap.open .envelope{
+      transform:translateY(185px) scale(.92);
+      opacity:.55;
+      pointer-events:none;
+    }
+
+    .envelope-wrap.ready .continue{
+      opacity:1;
+      visibility:visible;
+      pointer-events:auto;
+      position:absolute;
+      left:50%;
+      bottom:8px;
+      transform:translateX(-50%);
+      width:min(280px, 82%);
+      z-index:10;
+    }
+
+    @media (max-width:380px){
+      .panel{
+        padding:22px 14px;
+      }
+
+      .envelope-stage{
+        min-height:640px;
+      }
+
+      .envelope-wrap{
+        min-height:590px;
+      }
+
+      .envelope{
+        width:260px;
+        height:170px;
+      }
+
+      .flap::before{
+        border-left-width:130px;
+        border-right-width:130px;
+        border-top-width:95px;
+      }
+
+      .seal{
+        top:74px;
+      }
+
+      .letter{
+        width:min(250px, 78vw);
+        padding:19px 17px;
+      }
+
+      .letter h2{
+        font-size:1.18rem;
+        margin-bottom:12px;
+      }
+
+      .letter p{
+        font-size:.88rem;
+        line-height:1.46;
+        margin-bottom:9px;
+      }
+
+      .envelope-wrap.open .envelope{
+        transform:translateY(190px) scale(.88);
+      }
+    }
+
+    .question{
+      padding-top:34px;
+      padding-bottom:34px;
+    }
+
+    .choices{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+      margin-top:14px;
+    }
+
+    .final-note{
+      font-size:1.08rem;
+      margin-top:10px;
+    }
+
+    .heart-particle{
+      position:fixed;
+      bottom:-30px;
+      width:12px;
+      height:12px;
+      background:var(--red);
+      transform:rotate(45deg);
+      opacity:.22;
+      pointer-events:none;
+      animation:rise linear forwards;
+    }
+
+    .heart-particle::before,
+    .heart-particle::after{
+      content:"";
+      position:absolute;
+      width:12px;
+      height:12px;
+      border-radius:50%;
+      background:var(--red);
+    }
+
+    .heart-particle::before{left:-6px}
+    .heart-particle::after{top:-6px}
+
+    @keyframes rise{
+      from{transform:translateY(0) rotate(45deg);opacity:0}
+      15%{opacity:.22}
+      to{transform:translateY(-115vh) rotate(65deg);opacity:0}
+    }
+  
+    @media (max-width:380px){
+      .panel{
+        padding:22px 16px;
+      }
+
+      .envelope-stage{
+        min-height:670px;
+      }
+
+      .envelope{
+        width:260px;
+        height:170px;
+      }
+
+      .flap::before{
+        border-left-width:130px;
+        border-right-width:130px;
+        border-top-width:95px;
+      }
+
+      .letter{
+        width:min(244px, 76vw);
+        padding:20px 18px;
+      }
+
+      .letter h2{
+        font-size:1.22rem;
+      }
+
+      .letter p{
+        font-size:.92rem;
+        line-height:1.5;
+      }
+
+    }
+
+  
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background:
+        radial-gradient(circle at 8% 14%, rgba(90,55,22,.08) 0 1px, transparent 1.5px),
+        radial-gradient(circle at 78% 22%, rgba(90,55,22,.06) 0 1px, transparent 1.5px),
+        radial-gradient(circle at 34% 72%, rgba(90,55,22,.05) 0 1px, transparent 1.5px);
+      background-size:120px 120px, 170px 170px, 210px 210px;
+      opacity:.55;
+      mix-blend-mode:multiply;
+    }
+
+    body::after{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      box-shadow:inset 0 0 90px rgba(104,64,20,.16);
+    }
+
+    .panel{
+      position:relative;
+    }
+
+    .panel::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      border-radius:28px;
+      pointer-events:none;
+      box-shadow:inset 0 0 26px rgba(106,71,35,.045);
+    }
+
+    .letter{
+      background-color:#f2dfb8;
+      background-image:
+        linear-gradient(#0000 31px, rgba(120,82,43,.10) 32px),
+        radial-gradient(circle at 20% 15%, rgba(122,81,37,.06) 0 1px, transparent 1.5px);
+      background-size:100% 32px, 90px 90px;
+    }
+
+  </style>
+</head>
+<body>
+  <main class="app">
+
+    <section class="screen active" id="intro">
+      <div class="panel">
+        <div class="intro-line"></div>
+        <h1>Para Yulmi</h1>
+        <img class="photo" src="Imagen de Codex 29 ago 2026, 11_42_28 a.m..png" alt="Yulmi y Melvin compartiendo un momento especial">
+        <p class="caption">Este fue un lindo dia era mi cumpleaños y lo puede pasar contigo y aunque no fue una foto de los dos es un lindo recuerdo que tengo.</p>
+        <button class="btn primary" id="toLetter">Siguiente</button>
+      </div>
+    </section>
+
+    <section class="screen" id="letterScreen">
+      <div class="panel envelope-stage">
+        <div class="envelope-wrap" id="envelopeWrap">
+          <div class="letter" id="letter">
+            <h2>Quería escribirte esto</h2>
+            <p>
+              No sé exactamente cuál sea la mejor manera de empezar esto. Llevo un tiempo pensando qué decirte y,
+              aunque probablemente ya sabes muchas de estas cosas, quería encontrar una forma especial de decírtelas.
+            </p>
+            <p>
+              Desde que empezamos a conocernos mejor, poco a poco te has convertido en alguien muy especial para mí.
+              Me gusta pasar tiempo contigo, hablar contigo, hacerte reír y también esos pequeños momentos que quizá
+              parecen simples, pero que para mí terminan significando mucho.
+            </p>
+            <p>
+              Sé que los dos sabemos lo que sentimos y, aun así, quería hacer esto de una manera diferente. No quería
+              que simplemente quedara como algo que ambos sabemos, sino decirte claramente lo importante que te has
+              vuelto para mí.
+            </p>
+            <p>
+              Me gusta lo que tenemos, me gusta cómo me siento cuando estoy contigo y quiero seguir creando muchos más
+              momentos a tu lado. No puedo prometer que todo será perfecto, pero sí que quiero intentarlo contigo,
+              conocerte todavía más y cuidar esto bonito que ha ido creciendo entre nosotros.
+            </p>
+            <p class="signature">— Melvin</p>
+          </div>
+
+          <div class="envelope" id="envelope" aria-label="Abrir carta">
+            <div class="env-back"></div>
+            <div class="flap"></div>
+            <div class="seal">M</div>
+          </div>
+
+          <div class="open-hint" id="openHint">Toca el sobre para abrir la carta</div>
+          <button class="btn primary continue" id="toQuestion">Continuar</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="question">
+      <div class="panel question">
+        <div class="intro-line"></div>
+        <h1>¿Quieres ser mi novia?</h1>
+        <p>Quería preguntártelo de una forma que pudiéramos recordar.</p>
+
+        <div class="choices">
+          <button class="btn primary" id="yesBtn">Sí</button>
+          <button class="btn secondary" id="noBtn">No</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="yes">
+      <div class="panel question">
+        <div class="intro-line"></div>
+        <h1>Gracias</h1>
+        <p class="final-note">
+           Espero que este sea el comienzo de muchos momentos bonitos juntos. Te quiero.
+        </p>
+      </div>
+    </section>
+
+    <section class="screen" id="no">
+      <div class="panel question">
+        <div class="intro-line"></div>
+        <h2>Gracias por ser sincera conmigo</h2>
+        <p>
+          Quería decírtelo porque eres importante para mí, y respeto completamente lo que sientas.
+        </p>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    const screens = document.querySelectorAll('.screen');
+    const wrap = document.getElementById('envelopeWrap');
+    const envelope = document.getElementById('envelope');
+    const hint = document.getElementById('openHint');
+
+    function show(id){
+      screens.forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      window.scrollTo({top:0, behavior:'smooth'});
+    }
+
+    document.getElementById('toLetter').addEventListener('click', () => show('letterScreen'));
+
+    envelope.addEventListener('click', () => {
+      if (wrap.classList.contains('open')) return;
+
+      wrap.classList.add('open');
+      hint.textContent = '';
+
+      // Wait until the letter finishes coming out before enabling Continue.
+      setTimeout(() => {
+        wrap.classList.add('ready');
+      }, 950);
+    });
+
+    document.getElementById('toQuestion').addEventListener('click', () => show('question'));
+
+    document.getElementById('yesBtn').addEventListener('click', () => {
+      show('yes');
+      for(let i=0;i<18;i++){
+        setTimeout(createHeart, i*90);
+      }
+    });
+
+    document.getElementById('noBtn').addEventListener('click', () => show('no'));
+
+    function createHeart(){
+      const h = document.createElement('span');
+      h.className = 'heart-particle';
+      h.style.left = Math.random()*100 + 'vw';
+      h.style.animationDuration = (5 + Math.random()*4) + 's';
+      h.style.width = h.style.height = (8 + Math.random()*8) + 'px';
+      document.body.appendChild(h);
+      setTimeout(() => h.remove(), 9500);
+    }
+  </script>
+</body>
+</html>
+
